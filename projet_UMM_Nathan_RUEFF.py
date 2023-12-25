@@ -39,6 +39,7 @@ Importation des modules nécessaires au bon fonctionnement du programme.
 import random
 import Levenshtein
 import time
+import functools
 
 """
 Paramètres introduits :
@@ -57,40 +58,79 @@ Paramètres introduits :
 Initiialisation des paramètres
 """
 
-N = 7000
+N = 5000
 TS = 0.2
-TM = 0.5
+TM = 0.8
 phrase_mystere = input("Veuillez entrer la phrase mystère : ")
 L = len(phrase_mystere)
 alpha = 0.5
 
 def umm():
-    # Initialisation des variables
-    population = []
-    generation = 0
-    solution_trouvee = False
     start_time = time.time()
     stop_time = 0
-    generation_switch = 2000
+    generation = 0
+    resultat = []
+    # On découpe la phrase mystère en portions de 100 caractères
+    D = int(L/100)
+    L_d = [i*100 for i in range(D+1)]
+    # print(D, L_d) # DEBUG
+    numero_portion = 1
+    # On effectue le processus pour chaque portion
+    for p in L_d[:-1]:
+        # print(p) # DEBUG
+        portion = phrase_mystere[p:p+100]
+        # Initialisation des variables
+        population = []
+        solution_portion_trouvee = False
+
+        # Création de la population initiale
+        for i in range(N):
+            population.append(genese(len(portion)))
+
+        # Boucle principale du programme
+        while not solution_portion_trouvee:
+            # print(population) # DEBUG
+            # On trie la population en fonction de leur fitness
+            partial_fitness = functools.partial(fitness_leven, phrase_reference=portion)
+            population = sorted(population, key=partial_fitness)
+            # On affiche le meilleur élément de la population
+            print ("Portion : " + population[0] + "\n" + "Fitness : " + str(fitness_leven(population[0],portion)) + "\n" + "Génération : " + str(generation) + "\n" + "Portion n°" + str(numero_portion) + " sur " + str(D+1))
+            # On vérifie si la solution est trouvée
+            if population[0] == portion:
+                resultat.append(population[0])
+                solution_portion_trouvee = True
+                numero_portion += 1
+            else:
+                # On crée la nouvelle population
+                # print (len(population)) # DEBUG
+                population = nouvelle_population(population, TS, TM)
+                generation += 1
+                # print (generation)  # DEBUG
+
+    # On effectue la même chose pour la dernière portion
+    derniere_portion = phrase_mystere[L_d[-1]:]
+    # print(L_d[-1]) # DEBUG
+    # Initialisation des variables
+    population = []
+    solution_derniere_portion_trouvee = False
 
     # Création de la population initiale
     for i in range(N):
-        population.append(genese(L))
+        population.append(genese(len(derniere_portion)))
 
     # Boucle principale du programme
-    while not solution_trouvee:
-        if generation < generation_switch:
-            population = sorted(population, key=fitness_leven)
-        else:
-            population = sorted(population, key=fitness_positional, reverse=True)
+    while not solution_derniere_portion_trouvee:
         # print(population) # DEBUG
         # On trie la population en fonction de leur fitness
-        #population = sorted(population, key=fitness_leven)
+        partial_fitness = functools.partial(fitness_leven, phrase_reference=derniere_portion)
+        population = sorted(population, key=partial_fitness)
         # On affiche le meilleur élément de la population
-        print("Meilleur élément de la population : " + population[0])
+        print("Portion : " + population[0] + "\n" + "Fitness : " + str(
+            fitness_leven(population[0],derniere_portion)) + "\n" + "Génération : " + str(generation) + "\n" + "Portion n°" + str(D+1) + " sur " + str(D + 1))
         # On vérifie si la solution est trouvée
-        if population[0] == phrase_mystere:
-            solution_trouvee = True
+        if population[0] == derniere_portion:
+            resultat.append(population[0])
+            solution_derniere_portion_trouvee = True
             stop_time = time.time()
         else:
             # On crée la nouvelle population
@@ -99,7 +139,7 @@ def umm():
             generation += 1
             # print (generation)  # DEBUG
 
-    # On affiche le nombre de générations nécessaires pour trouver la solution
+    # On affiche le résultat
     print("Nombre de générations nécessaires pour trouver la solution : " + str(generation) + "\n" + "Temps d'exécution : " + str(stop_time - start_time) + " secondes.")
 
 def genese(L):
@@ -122,13 +162,13 @@ def tri_population(population, phrase_mystere):
     """
     population_triee = []
     for chromosome in population:
-        population_triee.append([chromosome, fitness_leven(chromosome)])
+        population_triee.append([chromosome, fitness_leven(chromosome, phrase_mystere)])
     return population_triee
 
 # Fonction fitness :
 
-def fitness_leven(C):
-    return Levenshtein.distance(C,phrase_mystere)
+def fitness_leven(C, phrase_reference):
+    return Levenshtein.distance(C,phrase_reference)
 
 
 def fitness_positional(C):
@@ -273,8 +313,8 @@ def mutation_chromosome(chromosome):
 umm()
 
 """
-phrase 100 caractères 1 : La lueur douce du crépuscule baigne la ville endormie d'une atmosphère calme et apaisante.
-phrase 100 caractères 2 : Les étoiles scintillent, éclairant le ciel nocturne d'une splendeur mystérieuse et envoûtante.
+phrase d'environ 100 caractères 1 : La lueur douce du crépuscule baigne la ville endormie d'une atmosphère calme et apaisante.
+phrase d'environ 100 caractères 2 : Les étoiles scintillent, éclairant le ciel nocturne d'une splendeur mystérieuse et envoûtante.
 
 texte 1000 caractères 1 : Dans une petite ville tranquille, les rues pavées murmuraient des histoires du passé. Les maisons au style ancien bordaient les trottoirs, témoins silencieux du temps qui s'écoulait. Au centre de la place, une fontaine gracieuse dansait avec l'eau qui scintillait sous le doux éclat du soleil. Les habitants vaquaient à leurs occupations quotidiennes, créant une atmosphère chaleureuse et accueillante. Un café pittoresque, aux chaises en fer forgé et aux parasols colorés, attirait les passants en quête d'une pause bien méritée. L'odeur envoûtante du café fraîchement moulu flottait dans l'air, créant une symphonie olfactive qui invitaient les gens à s'installer et à savourer le moment. Les conversations animées et les rires légers remplissaient l'atmosphère, créant une toile sonore qui enveloppait le lieu. À l'angle de la rue, une librairie indépendante aux étagères remplies d'histoires captivantes invitait les amateurs de lecture à explorer des mondes imaginaires. Le son familier des pages tournées résonnait dans l'espace, tandis que les lecteurs se perdaient dans des aventures qui transcendaient le temps et l'espace. C'était un refuge pour l'esprit, un endroit où l'imagination pouvait s'épanouir librement. À quelques pas de là, un parc verdoyant offrait une échappatoire à ceux qui cherchaient la sérénité. Les enfants riaient en jouant sur les balançoires, les couples se promenaient main dans la main, et les aînés trouvaient refuge sur les bancs ombragés. Les arbres majestueux, témoins d'innombrables saisons, racontaient silencieusement l'histoire du temps qui s'écoulait. Le soleil commençait à décliner lentement à l'horizon, baignant la ville d'une lumière dorée. Les façades des bâtiments s'illuminaient, créant une palette de couleurs éblouissantes qui capturaient l'essence de la vie urbaine. Les bruits de la journée faisaient place à une quiétude paisible, laissant place à la contemplation et à la réflexion. C'était dans ces moments, lorsque le crépuscule enveloppait la ville de son manteau, que l'on pouvait ressentir la magie subtile qui émanait de chaque rue, de chaque coin. La petite ville tranquille, loin des tumultes du monde moderne, était un sanctuaire intemporel où les moments simples se transformaient en souvenirs éternels.
 """
