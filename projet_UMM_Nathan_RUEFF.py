@@ -58,14 +58,16 @@ Paramètres introduits :
 Initiialisation des paramètres
 """
 
-N = 5000
-TS = 0.2
-TM = 0.8
-phrase_mystere = input("Veuillez entrer la phrase mystère : ")
-L = len(phrase_mystere)
-alpha = 0.5
+# N = 5000
+# TS = 0.2
+# TM = 0.8
+# L = len(phrase_mystere)
+# alpha = 0.5
 
-def umm():
+
+def umm(N, TS, TM, phrase_mystere):
+    generation_switch = 300
+    L = len(phrase_mystere)
     start_time = time.time()
     stop_time = 0
     generation = 0
@@ -91,8 +93,12 @@ def umm():
         while not solution_portion_trouvee:
             # print(population) # DEBUG
             # On trie la population en fonction de leur fitness
-            partial_fitness = functools.partial(fitness_leven, phrase_reference=portion)
-            population = sorted(population, key=partial_fitness)
+            partial_fitness_leven = functools.partial(fitness_leven, phrase_reference=portion)
+            partial_fitness_positional = functools.partial(fitness_positional, phrase_reference=portion)
+            if generation < generation_switch:
+                population = sorted(population, key=partial_fitness_leven)
+            else:
+                population = sorted(population, key=partial_fitness_positional, reverse=True)
             # On affiche le meilleur élément de la population
             print ("Portion : " + population[0] + "\n" + "Fitness : " + str(fitness_leven(population[0],portion)) + "\n" + "Génération : " + str(generation) + "\n" + "Portion n°" + str(numero_portion) + " sur " + str(D+1))
             # On vérifie si la solution est trouvée
@@ -103,7 +109,7 @@ def umm():
             else:
                 # On crée la nouvelle population
                 # print (len(population)) # DEBUG
-                population = nouvelle_population(population, TS, TM)
+                population = nouvelle_population(population, TS, TM, N)
                 generation += 1
                 # print (generation)  # DEBUG
 
@@ -122,8 +128,12 @@ def umm():
     while not solution_derniere_portion_trouvee:
         # print(population) # DEBUG
         # On trie la population en fonction de leur fitness
-        partial_fitness = functools.partial(fitness_leven, phrase_reference=derniere_portion)
-        population = sorted(population, key=partial_fitness)
+        partial_fitness_leven = functools.partial(fitness_leven, phrase_reference=derniere_portion)
+        partial_fitness_positional = functools.partial(fitness_positional, phrase_reference=derniere_portion)
+        if generation < generation_switch:
+            population = sorted(population, key=partial_fitness_leven)
+        else:
+            population = sorted(population, key=partial_fitness_positional, reverse=True)
         # On affiche le meilleur élément de la population
         print("Portion : " + population[0] + "\n" + "Fitness : " + str(
             fitness_leven(population[0],derniere_portion)) + "\n" + "Génération : " + str(generation) + "\n" + "Portion n°" + str(D+1) + " sur " + str(D + 1))
@@ -135,12 +145,13 @@ def umm():
         else:
             # On crée la nouvelle population
             # print (len(population)) # DEBUG
-            population = nouvelle_population(population, TS, TM)
+            population = nouvelle_population(population, TS, TM, N)
             generation += 1
             # print (generation)  # DEBUG
 
     # On affiche le résultat
-    print("Nombre de générations nécessaires pour trouver la solution : " + str(generation) + "\n" + "Temps d'exécution : " + str(stop_time - start_time) + " secondes.")
+    return (round(stop_time - start_time, 3))
+    # print("Nombre de générations nécessaires pour trouver la solution : " + str(generation) + "\n" + "Temps d'exécution : " + str(round(stop_time - start_time, 3)) + " secondes.")
 
 def genese(L):
     """
@@ -171,7 +182,7 @@ def fitness_leven(C, phrase_reference):
     return Levenshtein.distance(C,phrase_reference)
 
 
-def fitness_positional(C):
+def fitness_positional(C,phrase_reference):
     """
     Fonction fitness_leven : calcule le fitness d'un chromosome en prenant en compte l'ordre des caractères.
     :param C: chromosome
@@ -180,15 +191,16 @@ def fitness_positional(C):
     match = 0
     miss_placed = 0
     for i in range(len(C)):
-        if C[i] == phrase_mystere[i]:
+        if C[i] == phrase_reference[i]:
             match += 1
-        elif C[i] in phrase_mystere:
+        elif C[i] in phrase_reference:
             # Pénalise davantage les positions incorrectes
-            miss_placed += alpha
+            miss_placed += 0.5
     return match + miss_placed
 
 
-def nouvelle_population(population, TS, TM):
+
+def nouvelle_population(population, TS, TM, N):
     """
     Fonction nouvelle_population : crée une nouvelle population en fonction de la population actuelle.
     :param population: population actuelle
@@ -200,7 +212,7 @@ def nouvelle_population(population, TS, TM):
     # On sélectionne les chromosomes pour la nouvelle population
     nouvelle_population = selection(population, TS)
     # On croise les chromosomes pour la nouvelle population
-    nouvelle_population += reproduction_bat(nouvelle_population)
+    nouvelle_population += reproduction_bat(nouvelle_population, N, TS)
     # On mute les chromosomes pour la nouvelle population
     nouvelle_population = mutation(nouvelle_population, TM)
     return nouvelle_population
@@ -225,7 +237,7 @@ def selection(population, TS):
 #  Le nouvel individus est ajouté à la population : on itère la procédure
 #  de manière à retrouver une population de N individus.
 
-def reproduction(population):
+def reproduction(population, N, TS):
     """
     Fonction reproduction : reproduit deux chromosomes.
     :param population: population actuelle
@@ -249,7 +261,7 @@ def reproduction_chromosome(population):
     CM = P[:cut] + M[cut:]
     return CM
 
-def reproduction_bat(population):
+def reproduction_bat(population, N, TS):
     """
     Pour créer un nouveau chromosome, on choisit aléatoirement deux chromosomes parmis la population et pour chaque
     caractère du chromosome, je choisis aléatoirement le caractère du premier ou du deuxième chromosome.
@@ -310,11 +322,9 @@ def mutation_chromosome(chromosome):
     return chromosome
 
 
-umm()
+phrase_1 = "La lueur douce du crépuscule baigne la ville endormie d'une atmosphère calme et apaisante."
+phrase_2 = "Les étoiles scintillent, éclairant le ciel nocturne d'une splendeur mystérieuse et envoûtante."
+phrase_3 = "Dans une petite ville tranquille, les rues pavées murmuraient des histoires du passé. Les maisons au style ancien bordaient les trottoirs, témoins silencieux du temps qui s'écoulait. Au centre de la place, une fontaine gracieuse dansait avec l'eau qui scintillait sous le doux éclat du soleil. Les habitants vaquaient à leurs occupations quotidiennes, créant une atmosphère chaleureuse et accueillante. Un café pittoresque, aux chaises en fer forgé et aux parasols colorés, attirait les passants en quête d'une pause bien méritée. L'odeur envoûtante du café fraîchement moulu flottait dans l'air, créant une symphonie olfactive qui invitaient les gens à s'installer et à savourer le moment. Les conversations animées et les rires légers remplissaient l'atmosphère, créant une toile sonore qui enveloppait le lieu. À l'angle de la rue, une librairie indépendante aux étagères remplies d'histoires captivantes invitait les amateurs de lecture à explorer des mondes imaginaires. Le son familier des pages tournées résonnait dans l'espace, tandis que les lecteurs se perdaient dans des aventures qui transcendaient le temps et l'espace. C'était un refuge pour l'esprit, un endroit où l'imagination pouvait s'épanouir librement. À quelques pas de là, un parc verdoyant offrait une échappatoire à ceux qui cherchaient la sérénité. Les enfants riaient en jouant sur les balançoires, les couples se promenaient main dans la main, et les aînés trouvaient refuge sur les bancs ombragés. Les arbres majestueux, témoins d'innombrables saisons, racontaient silencieusement l'histoire du temps qui s'écoulait. Le soleil commençait à décliner lentement à l'horizon, baignant la ville d'une lumière dorée. Les façades des bâtiments s'illuminaient, créant une palette de couleurs éblouissantes qui capturaient l'essence de la vie urbaine. Les bruits de la journée faisaient place à une quiétude paisible, laissant place à la contemplation et à la réflexion. C'était dans ces moments, lorsque le crépuscule enveloppait la ville de son manteau, que l'on pouvait ressentir la magie subtile qui émanait de chaque rue, de chaque coin. La petite ville tranquille, loin des tumultes du monde moderne, était un sanctuaire intemporel où les moments simples se transformaient en souvenirs éternels."
 
-"""
-phrase d'environ 100 caractères 1 : La lueur douce du crépuscule baigne la ville endormie d'une atmosphère calme et apaisante.
-phrase d'environ 100 caractères 2 : Les étoiles scintillent, éclairant le ciel nocturne d'une splendeur mystérieuse et envoûtante.
 
-texte 1000 caractères 1 : Dans une petite ville tranquille, les rues pavées murmuraient des histoires du passé. Les maisons au style ancien bordaient les trottoirs, témoins silencieux du temps qui s'écoulait. Au centre de la place, une fontaine gracieuse dansait avec l'eau qui scintillait sous le doux éclat du soleil. Les habitants vaquaient à leurs occupations quotidiennes, créant une atmosphère chaleureuse et accueillante. Un café pittoresque, aux chaises en fer forgé et aux parasols colorés, attirait les passants en quête d'une pause bien méritée. L'odeur envoûtante du café fraîchement moulu flottait dans l'air, créant une symphonie olfactive qui invitaient les gens à s'installer et à savourer le moment. Les conversations animées et les rires légers remplissaient l'atmosphère, créant une toile sonore qui enveloppait le lieu. À l'angle de la rue, une librairie indépendante aux étagères remplies d'histoires captivantes invitait les amateurs de lecture à explorer des mondes imaginaires. Le son familier des pages tournées résonnait dans l'espace, tandis que les lecteurs se perdaient dans des aventures qui transcendaient le temps et l'espace. C'était un refuge pour l'esprit, un endroit où l'imagination pouvait s'épanouir librement. À quelques pas de là, un parc verdoyant offrait une échappatoire à ceux qui cherchaient la sérénité. Les enfants riaient en jouant sur les balançoires, les couples se promenaient main dans la main, et les aînés trouvaient refuge sur les bancs ombragés. Les arbres majestueux, témoins d'innombrables saisons, racontaient silencieusement l'histoire du temps qui s'écoulait. Le soleil commençait à décliner lentement à l'horizon, baignant la ville d'une lumière dorée. Les façades des bâtiments s'illuminaient, créant une palette de couleurs éblouissantes qui capturaient l'essence de la vie urbaine. Les bruits de la journée faisaient place à une quiétude paisible, laissant place à la contemplation et à la réflexion. C'était dans ces moments, lorsque le crépuscule enveloppait la ville de son manteau, que l'on pouvait ressentir la magie subtile qui émanait de chaque rue, de chaque coin. La petite ville tranquille, loin des tumultes du monde moderne, était un sanctuaire intemporel où les moments simples se transformaient en souvenirs éternels.
-"""
+# umm(2900, 0.26, 0.44, phrase_3)
