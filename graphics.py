@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from projet_UMM_Nathan_RUEFF import umm
+from UMM import umm
 
 def generate_and_plot(param_name, param_values, fixed_params, phrase_mystere):
     times = []
