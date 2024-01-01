@@ -44,7 +44,7 @@ import functools
 """
 Paramètres introduits :
 
- NG : le nombre de générations
+ N : le nombre de chromosome par générations
  L : longueur des chromosomes (et de la phrase mystère)
  N : la taille de la population (nombre d’individus)
  TS : le taux de sélection (ou de reproduction)
@@ -68,7 +68,7 @@ Initiialisation des paramètres
 
 
 def umm(N, TS, TM, phrase_mystere, utilisation):
-    generation_switch = 9000
+    generation_switch = 100 # Problème pour le moment avec des phrases trop longues.
     L = len(phrase_mystere)
     start_time = time.time()
     stop_time = 0
@@ -247,9 +247,8 @@ def reproduction(population, N, TS):
     :param population: population actuelle
     :return: chromosomes reproduits
     """
-    nouvelle_population = []
-    while len(nouvelle_population) < (1 - TS)*N :
-        nouvelle_population.append(reproduction_chromosome(population))
+    while len(population) < (1 - TS)*N:
+        population.append(reproduction_chromosome(population))
     # print ("Nombre chromosomes reproduits : " + str(len(nouvelle_population))) # DEBUG
     return nouvelle_population
 
@@ -270,7 +269,7 @@ def reproduction_bat(population, N, TS):
     Pour créer un nouveau chromosome, on choisit aléatoirement deux chromosomes parmis la population et pour chaque
     caractère du chromosome, je choisis aléatoirement le caractère du premier ou du deuxième chromosome.
     """
-    nouvelle_population = []
+    nouvelle_population = population
     while len(nouvelle_population) < (1 - TS)*N :
         nouvelle_population.append(reproduction_bat_chromosome(population))
     # print ("Nombre chromosomes reproduits : " + str(len(nouvelle_population))) # DEBUG
@@ -331,4 +330,4 @@ phrase_2 = "Les étoiles scintillent, éclairant le ciel nocturne d'une splendeu
 phrase_3 = "Dans une petite ville tranquille, les rues pavées murmuraient des histoires du passé. Les maisons au style ancien bordaient les trottoirs, témoins silencieux du temps qui s'écoulait. Au centre de la place, une fontaine gracieuse dansait avec l'eau qui scintillait sous le doux éclat du soleil. Les habitants vaquaient à leurs occupations quotidiennes, créant une atmosphère chaleureuse et accueillante. Un café pittoresque, aux chaises en fer forgé et aux parasols colorés, attirait les passants en quête d'une pause bien méritée. L'odeur envoûtante du café fraîchement moulu flottait dans l'air, créant une symphonie olfactive qui invitaient les gens à s'installer et à savourer le moment. Les conversations animées et les rires légers remplissaient l'atmosphère, créant une toile sonore qui enveloppait le lieu. À l'angle de la rue, une librairie indépendante aux étagères remplies d'histoires captivantes invitait les amateurs de lecture à explorer des mondes imaginaires. Le son familier des pages tournées résonnait dans l'espace, tandis que les lecteurs se perdaient dans des aventures qui transcendaient le temps et l'espace. C'était un refuge pour l'esprit, un endroit où l'imagination pouvait s'épanouir librement. À quelques pas de là, un parc verdoyant offrait une échappatoire à ceux qui cherchaient la sérénité. Les enfants riaient en jouant sur les balançoires, les couples se promenaient main dans la main, et les aînés trouvaient refuge sur les bancs ombragés. Les arbres majestueux, témoins d'innombrables saisons, racontaient silencieusement l'histoire du temps qui s'écoulait. Le soleil commençait à décliner lentement à l'horizon, baignant la ville d'une lumière dorée. Les façades des bâtiments s'illuminaient, créant une palette de couleurs éblouissantes qui capturaient l'essence de la vie urbaine. Les bruits de la journée faisaient place à une quiétude paisible, laissant place à la contemplation et à la réflexion. C'était dans ces moments, lorsque le crépuscule enveloppait la ville de son manteau, que l'on pouvait ressentir la magie subtile qui émanait de chaque rue, de chaque coin. La petite ville tranquille, loin des tumultes du monde moderne, était un sanctuaire intemporel où les moments simples se transformaient en souvenirs éternels."
 
 
-umm(2900, 0.26, 0.44, phrase_3, "manual")
+umm(2900, 0.26, 0.44, phrase_2, "manual")
