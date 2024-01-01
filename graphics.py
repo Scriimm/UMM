@@ -36,10 +36,10 @@ TS_values = [i * 0.02 for i in range(1, 41)]
 TM_values = [i * 0.02 for i in range(1, 41)]
 
 # Choisissez une valeur fixe pour les deux autres paramètres
-fixed_params = {'N': 2900, 'TS': 0.26, 'TM': 0.44}
+fixed_params = {'N': 2900, 'TS': 0.26, 'TM': 0.44, 'utilisation': 'auto'}
 phrase_mystere = "Je suis une phrase de test et je suis assez longue pour que l'algorithme UMM soit efficace."
 
 # Générer et afficher les graphiques pour N, TS, et TM
-# generate_and_plot('N', N_values, fixed_params, phrase_mystere)
-# generate_and_plot('TS', TS_values, fixed_params, phrase_mystere)
+generate_and_plot('N', N_values, fixed_params, phrase_mystere)
+generate_and_plot('TS', TS_values, fixed_params, phrase_mystere)
 generate_and_plot('TM', TM_values, fixed_params, phrase_mystere)
